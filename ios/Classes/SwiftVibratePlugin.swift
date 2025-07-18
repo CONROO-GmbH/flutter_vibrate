@@ -1,8 +1,15 @@
 import Flutter
 import UIKit
 import AudioToolbox
+import TargetConditionals
 
-private let isDevice = TARGET_OS_SIMULATOR == 0
+private let isDevice = false;
+
+#if TARGET_OS_SIMULATOR
+  isDevice = false;
+#else
+  isDevice = true;
+#endif
     
 public class SwiftVibratePlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
