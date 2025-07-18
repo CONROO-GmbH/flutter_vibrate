@@ -1,108 +1,110 @@
 import Flutter
 import UIKit
 import AudioToolbox
-import TargetConditionals
 
-private let isDevice = false;
-
-#if TARGET_OS_SIMULATOR
-  isDevice = false;
-#else
-  isDevice = true;
-#endif
-    
 public class SwiftVibratePlugin: NSObject, FlutterPlugin {
-  public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "vibrate", binaryMessenger: registrar.messenger())
-    let instance = SwiftVibratePlugin()
-    registrar.addMethodCallDelegate(instance, channel: channel)
-  }
-
+    
+    // Use modern Swift approach instead of TARGET_OS_SIMULATOR
+    private var isDevice: Bool {
+        #if targetEnvironment(simulator)
+        return false
+        #else
+        return true
+        #endif
+    }
+    
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(name: "vibrate", binaryMessenger: registrar.messenger())
+        let instance = SwiftVibratePlugin()
+        registrar.addMethodCallDelegate(instance, channel: channel)
+    }
+    
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-      switch (call.method) {
-          case "canVibrate":
-              if isDevice {
-                result(true)
-              } else {
-                result(false)
-              }
-          case "vibrate":
+        switch call.method {
+        case "canVibrate":
+            result(isDevice)
+            
+        case "vibrate":
+            if isDevice {
+                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+            }
+            result(nil)
+            
+        case "impact":
+            performImpactFeedback(style: .medium)
+            result(nil)
+            
+        case "selection":
+            performSelectionFeedback()
+            result(nil)
+            
+        case "success":
+            performNotificationFeedback(type: .success)
+            result(nil)
+            
+        case "warning":
+            performNotificationFeedback(type: .warning)
+            result(nil)
+            
+        case "error":
+            performNotificationFeedback(type: .error)
+            result(nil)
+            
+        case "heavy":
+            performImpactFeedback(style: .heavy)
+            result(nil)
+            
+        case "medium":
+            performImpactFeedback(style: .medium)
+            result(nil)
+            
+        case "light":
+            performImpactFeedback(style: .light)
+            result(nil)
+            
+        default:
+            result(FlutterMethodNotImplemented)
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func performImpactFeedback(style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        guard isDevice else { return }
+        
+        if #available(iOS 10.0, *) {
+            let generator = UIImpactFeedbackGenerator(style: style)
+            generator.prepare()
+            generator.impactOccurred()
+        } else {
+            // Fallback for iOS < 10.0
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            // Feedback
-          case "impact":
-            if #available(iOS 10.0, *) {
-              let impact = UIImpactFeedbackGenerator()
-              impact.prepare()
-              impact.impactOccurred()
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-          case "selection":
-            if #available(iOS 10.0, *) {
-              let selection = UISelectionFeedbackGenerator()
-              selection.prepare()
-              selection.selectionChanged()
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-          case "success":
-            if #available(iOS 10.0, *) {
-              let notification = UINotificationFeedbackGenerator()
-              notification.prepare()
-              notification.notificationOccurred(.success)
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-          case "warning":
-            if #available(iOS 10.0, *) {
-              let notification = UINotificationFeedbackGenerator()
-              notification.prepare()
-              notification.notificationOccurred(.warning)
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-          case "error":
-            if #available(iOS 10.0, *) {
-              let notification = UINotificationFeedbackGenerator()
-              notification.prepare()
-              notification.notificationOccurred(.error)
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-          case "heavy":
-            if #available(iOS 10.0, *) {
-              let generator = UIImpactFeedbackGenerator(style: .heavy)
-              generator.prepare()
-              generator.impactOccurred()
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-         case "medium":
-            if #available(iOS 10.0, *) {
-              let generator = UIImpactFeedbackGenerator(style: .medium)
-              generator.prepare()
-              generator.impactOccurred()
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-         case "light":
-            if #available(iOS 10.0, *) {
-              let generator = UIImpactFeedbackGenerator(style: .light)
-              generator.prepare()
-              generator.impactOccurred()
-            } else {
-              // Fallback on earlier versions
-              AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-          default:
-              result(FlutterMethodNotImplemented)
-      }
+        }
+    }
+    
+    private func performSelectionFeedback() {
+        guard isDevice else { return }
+        
+        if #available(iOS 10.0, *) {
+            let generator = UISelectionFeedbackGenerator()
+            generator.prepare()
+            generator.selectionChanged()
+        } else {
+            // Fallback for iOS < 10.0
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        }
+    }
+    
+    private func performNotificationFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
+        guard isDevice else { return }
+        
+        if #available(iOS 10.0, *) {
+            let generator = UINotificationFeedbackGenerator()
+            generator.prepare()
+            generator.notificationOccurred(type)
+        } else {
+            // Fallback for iOS < 10.0
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        }
     }
 }
