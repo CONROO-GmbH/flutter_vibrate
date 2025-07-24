@@ -74,6 +74,10 @@ class VibrateMethodCallHandler implements MethodChannel.MethodCallHandler {
                 vibrate(10);
                 result.success(null);
                 break;
+            case "cancel":
+                vibrator.cancel();
+                result.success(null);
+                break;
             default:
                 result.notImplemented();
                 break;

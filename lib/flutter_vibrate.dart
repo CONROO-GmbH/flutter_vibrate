@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 enum FeedbackType {
@@ -14,6 +15,15 @@ enum FeedbackType {
 }
 
 class Vibrate {
+  Vibrate._privateConstructor();
+
+  static final Vibrate _instance = Vibrate._privateConstructor();
+
+  factory Vibrate() {
+    return _instance;
+  }
+
+  static bool _cancel = false;
   static const MethodChannel _channel = MethodChannel('vibrate');
   static const Duration defaultVibrationDuration = Duration(milliseconds: 500);
 
@@ -65,6 +75,7 @@ class Vibrate {
 
   static Future vibrateWithPauses(Iterable<Duration> pauses) async {
     for (final Duration d in pauses) {
+      if (_cancel) break;
       await vibrate();
       //Because the native vibration is not awaited, we need to wait for
       //the vibration to end before launching another one
@@ -72,5 +83,16 @@ class Vibrate {
       await Future.delayed(d);
     }
     await vibrate();
+    _cancel = false;
+  }
+
+  static Future cancel() async {
+    try {
+      _cancel = true;
+      await _channel.invokeMethod('cancel');
+    } catch (e) {
+      // Handle any errors that might occur during cancellation
+      debugPrint('Error cancelling vibration: $e');
+    }
   }
 }

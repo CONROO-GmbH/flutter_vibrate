@@ -1,10 +1,10 @@
 import Flutter
 import UIKit
 import AudioToolbox
+import CoreHaptics
 
 public class SwiftVibratePlugin: NSObject, FlutterPlugin {
     
-    // Use modern Swift approach instead of TARGET_OS_SIMULATOR
     private var isDevice: Bool {
         #if targetEnvironment(simulator)
         return false
@@ -12,12 +12,26 @@ public class SwiftVibratePlugin: NSObject, FlutterPlugin {
         return true
         #endif
     }
+
+    @available(iOS 13.0, *)
+    private static var engine: CHHapticEngine?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "vibrate", binaryMessenger: registrar.messenger())
         let instance = SwiftVibratePlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
+
+    @available(iOS 13.0, *)
+    private func cancelVibration() {
+        SwiftVibratePlugin.engine?.stop(completionHandler: { error in
+                if let error = error {
+                    print("Error stopping haptic engine: \(error)")
+                } else {
+                    print("Haptic engine stopped successfully.")
+                }
+            })
+        }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
@@ -61,7 +75,15 @@ public class SwiftVibratePlugin: NSObject, FlutterPlugin {
         case "light":
             performImpactFeedback(style: .light)
             result(nil)
-            
+
+        case "cancel":
+            if #available(iOS 13.0, *) {
+                cancelVibration()
+            } else {
+                result(nil)
+            }
+            result(nil)
+
         default:
             result(FlutterMethodNotImplemented)
         }
