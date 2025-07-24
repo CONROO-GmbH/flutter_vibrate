@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 enum FeedbackType {
@@ -72,5 +73,14 @@ class Vibrate {
       await Future.delayed(d);
     }
     await vibrate();
+  }
+
+  static Future cancel() async {
+    try {
+      await _channel.invokeMethod('cancel');
+    } catch (e) {
+      // Handle any errors that might occur during cancellation
+      debugPrint('Error cancelling vibration: $e');
+    }
   }
 }
