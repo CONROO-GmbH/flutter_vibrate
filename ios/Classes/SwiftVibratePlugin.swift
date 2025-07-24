@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import AudioToolbox
+import CoreHaptics
 
 public class SwiftVibratePlugin: NSObject, FlutterPlugin {
     
@@ -11,6 +12,9 @@ public class SwiftVibratePlugin: NSObject, FlutterPlugin {
         return true
         #endif
     }
+
+    @available(iOS 13.0, *)
+    private static var engine: CHHapticEngine?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "vibrate", binaryMessenger: registrar.messenger())
@@ -20,7 +24,7 @@ public class SwiftVibratePlugin: NSObject, FlutterPlugin {
 
     @available(iOS 13.0, *)
     private func cancelVibration() {
-        VibrationPluginSwift.engine?.stop(completionHandler: { error in
+        SwiftVibratePlugin.engine?.stop(completionHandler: { error in
                 if let error = error {
                     print("Error stopping haptic engine: \(error)")
                 } else {
